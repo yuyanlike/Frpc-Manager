@@ -3,7 +3,6 @@ from tkinter import messagebox, scrolledtext, simpledialog, ttk
 import os
 import subprocess
 from glob import glob
-import threading
 
 
 class EditDialog(simpledialog.Dialog):

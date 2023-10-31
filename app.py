@@ -10,36 +10,35 @@ class EditDialog(simpledialog.Dialog):
 	def __init__(self, parent, title=None, text=None):
 		self.text = text
 		super().__init__(parent, title)
-
+	
 	def body(self, master):
 		self.text_editor = scrolledtext.ScrolledText(master, width=50, height=20)
 		self.text_editor.insert(tk.INSERT, self.text)
 		self.text_editor.pack()
 		# 在 ScrolledText 中捕获并处理回车键事件
 		self.text_editor.bind('<KeyPress-Return>', self.newline)
-
+	
 	def newline(self, event=None):
 		self.text_editor.insert(tk.INSERT, '\n')
 		return 'break'
-
+	
 	def apply(self):
 		self.text = self.text_editor.get('1.0', tk.END)
-
+	
 	def buttonbox(self):
 		# remove default buttonbox
 		box = tk.Frame(self)
-
+		
 		w = tk.Button(box, text="OK", width=10, command=self.ok, default="active")
 		w.pack(side="left", padx=5, pady=5)
-
+		
 		w = tk.Button(box, text="Cancel", width=10, command=self.cancel)
 		w.pack(side="left", padx=5, pady=5)
-
+		
 		self.bind("<Return>", self.ok)
 		self.bind("<Escape>", self.cancel)
-
+		
 		box.pack()
-
 
 
 class Application(tk.Frame):
@@ -50,10 +49,10 @@ class Application(tk.Frame):
 		self.create_widgets()
 		self.processes = {}
 		messagebox.showinfo("使用教程", "1. 新建配置文件\n"
-										"2. 修改配置文件，输入你的配置文件内容保存。\n"
-										"3. 选中配置文件，点击“启动”按钮启动客户端。启动后，在“正在运行的客户端”中可以看到你的客户端。\n"
-										"4. 在“正在运行的客户端”中,选中已经启动的客户端点击停止按钮停止客户端。\n"
-										"5. 修改和删除配置文件同上。")
+		                                "2. 修改配置文件，输入你的配置文件内容保存。\n"
+		                                "3. 选中配置文件，点击“启动”按钮启动客户端。启动后，在“正在运行的客户端”中可以看到你的客户端。\n"
+		                                "4. 在“正在运行的客户端”中,选中已经启动的客户端点击停止按钮停止客户端。\n"
+		                                "5. 修改和删除配置文件同上。")
 		self.update_ui()
 	
 	def update_ui(self):
@@ -82,7 +81,6 @@ class Application(tk.Frame):
 		
 		# 每隔一秒更新一次界面
 		self.master.after(1000, self.update_ui)
-
 	
 	def create_widgets(self):
 		# Configure grid
@@ -223,8 +221,8 @@ class Application(tk.Frame):
 			# 将所有输出重定向到一个文件
 			with open('app.log', 'a') as outfile:
 				process = subprocess.Popen(["./frpc/frpc", "-c", "./frpc/" + config_file],
-										   stdout=outfile, stderr=outfile,
-										   creationflags=subprocess.CREATE_NO_WINDOW)
+				                           stdout=outfile, stderr=outfile,
+				                           creationflags=subprocess.CREATE_NO_WINDOW)
 			self.processes[config_file] = process
 			self.process_list.insert(tk.END, config_file)
 			messagebox.showinfo("信息", "客户端已启动")

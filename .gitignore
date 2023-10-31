@@ -3,3 +3,4 @@
 /.idea/
 /frpc/*.toml
 /frpc/*.ini
+/app.log

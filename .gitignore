@@ -1,0 +1,5 @@
+/dist/
+/venv/
+/.idea/
+/frpc/*.toml
+/frpc/*.ini

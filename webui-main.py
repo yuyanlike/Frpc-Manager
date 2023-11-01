@@ -215,7 +215,14 @@ def windows_check():
 		webbrowser.open('http://127.0.0.1:19999')
 
 
-if __name__ == '__main__':
+# 检查文件夹是否存在不存在则创建
+def mkdir_if_not_exist():
+	path = './frpc'
+	if not os.path.exists(path):
+		os.makedirs(path)
+
+
+def main():
 	windows_check()
 	try:
 		app.run(port=19999, host='0.0.0.0')
@@ -224,3 +231,7 @@ if __name__ == '__main__':
 		for frpc_process in frpc_processes.values():
 			frpc_process.terminate()
 		logging.info('停止所有客户端成功')
+
+
+if __name__ == '__main__':
+	main()

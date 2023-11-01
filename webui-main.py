@@ -22,10 +22,11 @@ frpc_processes = {}
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-	if path != "" and os.path.exists("webui/" + path):
-		return send_from_directory('webui', path)
+	base_dir = os.path.dirname(__file__)
+	if path != "" and os.path.exists(os.path.join(base_dir, "webui", path)):
+		return send_from_directory(os.path.join(base_dir, 'webui'), path)
 	else:
-		return send_from_directory('webui', 'index.html')
+		return send_from_directory(os.path.join(base_dir, 'webui'), 'index.html')
 
 
 @app.route('/api/configs', methods=['GET'])
@@ -223,10 +224,10 @@ def mkdir_if_not_exist():
 
 
 def main():
-	windows_check()
 	try:
+		windows_check()
+		mkdir_if_not_exist()
 		app.run(port=19999, host='0.0.0.0')
-	
 	except KeyboardInterrupt:
 		for frpc_process in frpc_processes.values():
 			frpc_process.terminate()

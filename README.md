@@ -29,3 +29,5 @@
 > 其他系统自己下载frpc二进制文件放进./frpc 目录
 
 > WebUI 建议直接下载 `webui-main.py` 和 `./webui` 目录 新建 frpc目录 `mkdir frpc`
+
+> windows webui 打包 `pyinstaller FRPC管理器-WebUI.spec` （AMD64，X86_64） 

@@ -1,5 +1,5 @@
 import logging
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 import os
 import subprocess
 from flask_cors import CORS
@@ -16,20 +16,28 @@ CORS(app, supports_credentials=True)
 frpc_processes = {}
 
 
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+	if path != "" and os.path.exists("dist/" + path):
+		return send_from_directory('dist', path)
+	else:
+		return send_from_directory('dist', 'index.html')
+
+
 @app.route('/api/configs', methods=['GET'])
 def get_configs():
 	"""
 	获取./frpc目录中的配置文件列表并以JSON响应的方式返回。
 	:return: 包含符合指定扩展名的配置文件名的JSON响应
 	"""
-	logging.info('Running get_configs function')
 	config_extensions = ['.toml', '.json', '.yaml', '.ini']
 	configs = []
 	
 	for config_file in os.listdir('./frpc'):
 		if os.path.splitext(config_file)[1] in config_extensions:
 			configs.append(config_file)
-	
+	logging.info('获取配置文件成功，共有' + str(len(configs)) + '个配置文件')
 	return jsonify(configs)
 
 
@@ -37,13 +45,13 @@ def get_configs():
 def create_config():
 	"""
 	创建一个新的配置文件并将其保存到./frpc目录中。
-
 	:return: 包含成功状态的JSON响应
 	"""
 	config_name = request.json.get('name')
 	
 	for char in config_name:
 		if not char.isalnum() and char not in "（）()_.":
+			logging.error('创建配置文件失败: ' + config_name + '非法字符')
 			return jsonify({'status': 'error', 'message': '配置文件名非法'})
 	
 	for ext in [".toml", ".ini", ".yaml", ".json"]:
@@ -55,6 +63,7 @@ def create_config():
 	config_file_path = f'./frpc/{config_name}'
 	
 	if os.path.isfile(config_file_path):
+		logging.error('创建配置文件失败: ' + config_name + '已存在')
 		return jsonify({'status': 'error', 'message': '配置文件已存在'})
 	
 	config_content = request.json.get('content')
@@ -132,7 +141,10 @@ def get_processes():
 
 	:return: 包含所有正在运行的frpc进程的配置文件名的JSON响应
 	"""
-	logging.info('读取所有正在运行的frpc进程')
+	# 检查每个运行的进程是否还在运行
+	for config_file, frpc_process in list(frpc_processes.items()):
+		if frpc_process.poll() is not None:  # 如果进程已经结束
+			del frpc_processes[config_file]  # 从字典中删除
 	logging.info('正在运行的客户端: ' + ' '.join(frpc_processes.keys()))
 	return jsonify(list(frpc_processes.keys()))
 
@@ -193,7 +205,7 @@ def stop_all_processes():
 
 if __name__ == '__main__':
 	try:
-		app.run(debug=True, host='0.0.0.0', port=5000)
+		app.run(port=19999)
 	except KeyboardInterrupt:
 		for frpc_process in frpc_processes.values():
 			frpc_process.terminate()

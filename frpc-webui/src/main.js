@@ -4,7 +4,7 @@ import 'element-plus/dist/index.css'
 import App from './App.vue'
 import axios from 'axios';
 
-axios.defaults.baseURL = 'http://192.168.1.2:5000';
+axios.defaults.baseURL = process.env.VUE_APP_API_URL
 
 
 const app = createApp(App)

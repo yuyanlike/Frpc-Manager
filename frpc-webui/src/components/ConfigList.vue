@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <h2>frpc 管理器</h2>
+    <h2>FRPC管理器-WebUI</h2>
     <el-row>
       <el-col :span="24">
         <h3>全部配置文件</h3>
@@ -8,26 +8,27 @@
           <el-table-column prop="name" label="配置文件名"></el-table-column>
           <el-table-column
             label="操作"
-            width="300">
+            width="350">
             <template v-slot:default="scope">
               <el-button type="primary" @click="startProcess(scope.row.name)" :disabled="scope.row.status === '运行中🟢'">启动</el-button>
               <el-button type="danger" @click="stopProcess(scope.row.name)" :disabled="scope.row.status !== '运行中🟢'">停止</el-button>
               <el-button type="warning" @click="showEditConfigDialog(scope.row.name)">编辑</el-button>
-              <el-button type="info" @click="deleteConfig(scope.row.name)">删除</el-button>
+              <el-button type="info" @click="deleteConfig(scope.row.name)" :disabled="scope.row.status === '运行中🟢'">删除</el-button>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态"></el-table-column>
         </el-table>
-        <h3></h3>
-        <el-button type="primary" @click="showCreateConfigDialog">新建配置文件</el-button>
+
+        <el-button class="button-spacing" type="primary" @click="showCreateConfigDialog">新建配置文件</el-button>
+<!--        <el-button class="button-spacing" type="primary" @click="showCreateConfigDialog">查看使用说明</el-button>-->
       </el-col>
     </el-row>
     <el-row v-if="showEditor">
       <el-col :span="24">
         <h3>编辑器</h3>
-        <el-input type="text" v-model="selectedConfig" placeholder="文件名"></el-input>
-        <el-input type="textarea" v-model="configContent" :autosize="{ minRows: 10, maxRows: Infinity }"></el-input>
-        <el-button type="primary" @click="saveConfig">保存</el-button>
+        <el-input type="text" v-model="selectedConfig" placeholder="文件名" @change="validateFileName" :disabled="!isNewConfig"></el-input>
+        <el-input class="button-spacing" type="textarea" v-model="configContent" :autosize="{ minRows: 10, maxRows: Infinity }" placeholder="配置内容"></el-input>
+        <el-button class="button-spacing" type="primary" @click="saveConfig">保存</el-button>
       </el-col>
     </el-row>
   </div>
@@ -44,7 +45,8 @@ export default {
       selectedConfig: null,
       configContent: '',
       showEditor: false,
-      processes: []
+      processes: [],
+      isNewConfig: false,
     };
   },
   methods: {
@@ -68,10 +70,12 @@ export default {
       this.showEditor = true;
       this.selectedConfig = '';
       this.configContent = '';
+      this.isNewConfig = true;
     },
     showEditConfigDialog(name) {
       this.showEditor = true;
       this.selectedConfig = name;
+      this.isNewConfig = false;
       this.getConfig();
     },
     deleteConfig(name) {
@@ -104,13 +108,25 @@ export default {
     },
     saveConfig() {
       if (this.selectedConfig) {
-        axios.put(`/api/configs/${this.selectedConfig}`, { content: this.configContent })
-          .then(response => {
-            if (response.data.status === 'success') {
-              this.getConfigs();
-              Swal.fire('保存成功', '', 'success');
-            }
-          });
+        const data = { name: this.selectedConfig, content: this.configContent }
+        if (this.isNewConfig) {
+          axios.post('/api/configs', data)
+            .then(response => {
+              if (response.data.status === 'success') {
+                this.getConfigs();
+                Swal.fire('保存成功', '', 'success');
+              }
+            });
+        } else {
+          const url = `/api/configs/${this.selectedConfig}`;
+          axios.put(url, data)
+            .then(response => {
+              if (response.data.status === 'success') {
+                this.getConfigs();
+                Swal.fire('保存成功', '', 'success');
+              }
+            });
+        }
       }
     },
     startProcess(name) {
@@ -141,6 +157,16 @@ export default {
             });
         }
       });
+    },
+    validateFileName() {
+      const regex = /^[\w\p{Script=Hani}.-]+(\.toml|\.ini|\.json|\.yaml)?$/u;
+      if (!regex.test(this.selectedConfig)) {
+        Swal.fire('错误', '文件名只能包含中文、字母、数字、下划线和点，如果有后缀，只能是toml、ini、json、yaml', 'error');
+        this.selectedConfig = '';
+      } else if (this.isNewConfig && this.configs.some(config => config.name.split('.')[0] === this.selectedConfig.split('.')[0])) {
+        Swal.fire('错误', '文件名已存在', 'error');
+        this.selectedConfig = '';
+      }
     }
   },
   created() {
@@ -149,9 +175,12 @@ export default {
 }
 </script>
 
-
 <style scoped>
 .container {
   margin: 20px;
+}
+
+.button-spacing {
+  margin-top: 15px;
 }
 </style>

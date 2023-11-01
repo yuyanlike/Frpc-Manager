@@ -1,11 +1,15 @@
 import logging
-from flask import Flask, jsonify, request, send_from_directory
 import os
+import platform
 import subprocess
+import webbrowser
+
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 # 配置日志记录器
-logging.basicConfig(filename='app.log', level=logging.DEBUG, format='%(asctime)s %(message)s', encoding='utf-8')
+logging.basicConfig(level=logging.FATAL, format='%(asctime)s %(message)s', encoding='utf-8')
+# logging.basicConfig(filename="app.log", level=logging.INFO, format='%(asctime)s %(message)s', encoding='utf-8')
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -19,10 +23,10 @@ frpc_processes = {}
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-	if path != "" and os.path.exists("dist/" + path):
-		return send_from_directory('dist', path)
+	if path != "" and os.path.exists("webui/" + path):
+		return send_from_directory('webui', path)
 	else:
-		return send_from_directory('dist', 'index.html')
+		return send_from_directory('webui', 'index.html')
 
 
 @app.route('/api/configs', methods=['GET'])
@@ -203,9 +207,21 @@ def stop_all_processes():
 	return jsonify({'status': 'success'})
 
 
+def windows_check():
+	"""
+	如果当前是在Windows或者MacOS中运行，启动应用的时候自动从浏览器打开127.0.0.1:19999
+	:return:
+	"""
+	if platform.system() in ('Windows', 'Darwin'):
+		logging.info('当前是在Windows或者MacOS中运行，请启动应用的时候自动从浏览器打开127.0.0.1:19999')
+		webbrowser.open('http://127.0.0.1:19999')
+
+
 if __name__ == '__main__':
+	windows_check()
 	try:
-		app.run(port=19999)
+		app.run(port=19999, host='0.0.0.0')
+	
 	except KeyboardInterrupt:
 		for frpc_process in frpc_processes.values():
 			frpc_process.terminate()

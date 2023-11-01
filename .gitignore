@@ -1,6 +1,7 @@
-#/dist/
+#/webui/
 /venv/
 /.idea/
 /frpc/*.toml
 /frpc/*.ini
 /app.log
+/frpc-webui/dist

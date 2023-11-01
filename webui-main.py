@@ -5,16 +5,15 @@ import subprocess
 import webbrowser
 
 from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
 
 # 配置日志记录器
-logging.basicConfig(level=logging.FATAL, format='%(asctime)s %(message)s', encoding='utf-8')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', encoding='utf-8')
 # logging.basicConfig(filename="app.log", level=logging.INFO, format='%(asctime)s %(message)s', encoding='utf-8')
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 # 配置跨域 允许所有跨域
-CORS(app, supports_credentials=True)
+# CORS(app, supports_credentials=True)
 
 # 存储frpc进程的字典
 frpc_processes = {}
@@ -213,7 +212,6 @@ def windows_check():
 	:return:
 	"""
 	if platform.system() in ('Windows', 'Darwin'):
-		logging.info('当前是在Windows或者MacOS中运行，请启动应用的时候自动从浏览器打开127.0.0.1:19999')
 		webbrowser.open('http://127.0.0.1:19999')
 
 

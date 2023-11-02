@@ -12,27 +12,23 @@ from pystray import MenuItem as item
 
 
 class App:
-	def __init__(self, root):
-		self.icon = None
-		self.root = root
-		self.root.geometry('350x200')  # 设置窗口大小
-		self.root.protocol("WM_DELETE_WINDOW", self.hide)
-		self.root.title("FRPC WebUI Manager")
+	def __init__(self):
+		self.root = tk.Tk()
+		self.root.withdraw()  # 隐藏窗口
 		self.webui_process = None
+		self.status_item = item(lambda text: '当前WebUI正在运行 ✓' if self.is_flask_running() else '当前WebUI未运行 X',
+		                        lambda text: text)
 		
-		# 创建按钮
-		self.start_button = tk.Button(root, text='启动WebUI', command=self.start_webui, bg='green')
-		self.stop_button = tk.Button(root, text='停止WebUI', command=self.stop_webui, bg='red')
-		self.open_button = tk.Button(root, text='打开WebUI管理页面', command=self.open_webui, bg='blue')
-		self.hide_button = tk.Button(root, text='隐藏窗口', command=self.hide, bg='orange')
-		self.exit_button = tk.Button(root, text='退出应用', command=self.exit_app, bg='gray')
+		# 创建托盘菜单
+		self.menu = (self.status_item,
+		             item('打开WebUI管理页面', self.open_webui),
+		             item('启动WebUI', self.start_webui),
+		             item('停止WebUI', self.stop_webui),
+		             item('退出应用', self.exit_app))
 		
-		# 布局
-		self.start_button.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-		self.stop_button.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-		self.open_button.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-		self.hide_button.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-		self.exit_button.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+		# 创建托盘图标
+		image = Image.open("./webui/favicon.ico")  # 你的图标地址
+		self.icon = icon("name", image, "FRPC WebUI Manager", self.menu)
 	
 	@staticmethod
 	def is_port_in_use(port):
@@ -53,11 +49,11 @@ class App:
 		else:
 			# 指定 Python 解释器路径，确保使用正确的虚拟环境
 			# python_executable = "./venv/bin/python"  # Unix/Linux
-			python_executable = ".\\venv\\Scripts\\python.exe"  # Windows
-			
-			# 启动子进程
-			self.webui_process = subprocess.Popen([python_executable, "webuiapi.py"])
-			# self.webui_process = subprocess.Popen(['python', "webuiapi.py"])
+			# python_executable = ".\\venv\\Scripts\\python.exe"  # Windows
+			#
+			# # 启动子进程
+			# self.webui_process = subprocess.Popen([python_executable, "webuiapi.py"])
+			self.webui_process = subprocess.Popen(['python', "webuiapi.py"])
 			tkinter.messagebox.showinfo('信息', 'WebUI已启动')
 	
 	def stop_webui(self):
@@ -65,19 +61,13 @@ class App:
 			self.webui_process.terminate()
 			self.webui_process.wait()  # 等待进程结束
 			self.webui_process = None
-			tkinter.messagebox.showinfo('信息', 'WebUI已停止')
+		self.icon.update_menu()
 	
 	def open_webui(self):
 		if self.is_flask_running():
-			webbrowser.open_new_tab("http://localhost:19999")  # 你的Flask应用地址
+			webbrowser.open_new_tab("http://127.0.0.1:19999")  # 你的Flask应用地址
 		else:
 			tkinter.messagebox.showerror('错误', 'WebUI未运行')
-	
-	def hide(self):
-		self.root.withdraw()
-	
-	def show(self):
-		self.root.deiconify()
 	
 	def exit_app(self):
 		if self.webui_process is not None:
@@ -85,21 +75,10 @@ class App:
 			self.webui_process = None
 		self.icon.stop()
 		self.root.quit()
-	
-	def run_icon(self):
-		image = Image.open("./webui/favicon.ico")  # 你的图标地址
-		menu = (item('打开WebUI管理页面', self.open_webui),
-		        item('启动WebUI', self.start_webui),
-		        item('停止WebUI', self.stop_webui),
-		        item('显示窗口', self.show),
-		        item('退出应用', self.exit_app))
-		self.icon = icon("name", image, "FRPC WebUI Manager", menu)
-		self.icon.run()
 
 
 if __name__ == "__main__":
-	root = tk.Tk()
-	app = App(root)
-	icon_thread = threading.Thread(target=app.run_icon)
+	app = App()
+	icon_thread = threading.Thread(target=app.icon.run)
 	icon_thread.start()
-	root.mainloop()
+	app.root.mainloop()

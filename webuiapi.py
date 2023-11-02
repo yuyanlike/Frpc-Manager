@@ -5,7 +5,8 @@ import subprocess
 import webbrowser
 
 from flask import Flask, jsonify, request, send_from_directory
-from flask_cors import CORS
+
+# from flask_cors import CORS
 
 # 配置日志记录器
 # logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s', encoding='utf-8')
@@ -14,7 +15,7 @@ logging.basicConfig(filename="app.log", level=logging.INFO, format='%(asctime)s 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 # 配置跨域 允许所有跨域
-CORS(app, supports_credentials=True)
+# CORS(app, supports_credentials=True)
 
 # 存储frpc进程的字典
 frpc_processes = {}

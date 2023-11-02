@@ -10,7 +10,9 @@ from PIL import Image
 from pystray import Icon as icon
 from pystray import MenuItem as item
 
-
+"""
+带有托盘应用和用户界面的WebUI管理器
+"""
 class App:
 	def __init__(self, root):
 		self.icon = None

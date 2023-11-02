@@ -5,7 +5,6 @@
 
 ### 这是我自己用的 代码烂的和狗屎一样。看不惯您随意。
 
-###  
+### 当前分支 仅app.py为windows的webui和托盘程序。其他.py文件无用
 
-
-
+### 打包exe命令  `pyinstaller FRPC-WebUI管理器.spec`

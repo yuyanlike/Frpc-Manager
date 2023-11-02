@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['webui-main.py'],
+    ['webuiapi.py'],
     pathex=[],
     binaries=[],
     datas=[('webui', 'webui')],

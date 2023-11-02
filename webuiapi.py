@@ -6,9 +6,10 @@ import webbrowser
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+
 # 配置日志记录器
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s', encoding='utf-8')
-# logging.basicConfig(filename="app.log", level=logging.INFO, format='%(asctime)s %(message)s', encoding='utf-8')
+# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s', encoding='utf-8')
+logging.basicConfig(filename="app.log", level=logging.INFO, format='%(asctime)s %(message)s', encoding='utf-8')
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -213,6 +214,7 @@ def windows_check():
 	:return:
 	"""
 	if platform.system() in ('Windows', 'Darwin'):
+		logging.info('检测到当前是在Windows或者MacOS中运行，启动应用的时候自动从浏览器打开127.0.0.1:19999')
 		webbrowser.open('http://127.0.0.1:19999')
 
 
@@ -227,7 +229,7 @@ def main():
 	try:
 		windows_check()
 		mkdir_if_not_exist()
-		app.run(port=19999, host='0.0.0.0', debug=True)
+		app.run(port=19999, host='0.0.0.0')
 	except KeyboardInterrupt:
 		for frpc_process in frpc_processes.values():
 			frpc_process.terminate()

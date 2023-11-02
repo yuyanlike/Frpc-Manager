@@ -21,11 +21,11 @@ class App:
 		self.webui_process = None
 		
 		# 创建按钮
-		self.start_button = tk.Button(root, text='启动WebUI', command=self.start_webui, bg='green')
-		self.stop_button = tk.Button(root, text='停止WebUI', command=self.stop_webui, bg='red')
-		self.open_button = tk.Button(root, text='打开WebUI管理页面', command=self.open_webui, bg='blue')
-		self.hide_button = tk.Button(root, text='隐藏窗口', command=self.hide, bg='orange')
-		self.exit_button = tk.Button(root, text='退出应用', command=self.exit_app, bg='gray')
+		self.start_button = tk.Button(root, text='启动WebUI', command=self.start_webui, bg='#00d26a')
+		self.stop_button = tk.Button(root, text='停止WebUI', command=self.stop_webui, bg='#f56c6c')
+		self.open_button = tk.Button(root, text='打开WebUI管理页面', command=self.open_webui, bg='#409eff')
+		self.hide_button = tk.Button(root, text='隐藏窗口', command=self.hide, bg='#909399')
+		self.exit_button = tk.Button(root, text='退出应用', command=self.exit_app)
 		
 		# 布局
 		self.start_button.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)

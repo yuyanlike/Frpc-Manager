@@ -111,11 +111,12 @@ class TrayApp:
 			logging.info('WebUI未运行')
 	
 	def exit_app(self):
-		stop_frpc()
-		if self.webui_server is not None:
-			self.webui_server.shutdown()
-			self.webui_server = None
-			logging.info('WebUI已停止')
+		# stop_frpc()
+		# if self.webui_server is not None:
+		# 	self.webui_server.shutdown()
+		# 	self.webui_server = None
+		self.stop_webui()
+		logging.info('WebUI已停止')
 		self.icon.stop()
 
 

@@ -22,7 +22,6 @@ app.config['JSON_AS_ASCII'] = False
 CORS(app, supports_credentials=True)
 # 存储frpc进程的字典
 frpc_processes = {}
-
 # 全局工作目录配置
 if getattr(sys, 'frozen', False):
 	# 如果应用被打包，使用 '_MEIPASS' 目录
@@ -44,14 +43,13 @@ else:
 class TrayApp:
 	def __init__(self):
 		self.webui_server = None
-		self.stop_event = threading.Event()  # 新增一个 Event 对象
 		self.status_item = item(lambda text: '当前WebUI正在运行 ✓' if self.is_flask_running() else '当前WebUI未运行 X',
 		                        lambda text: text)
 		
 		# 创建托盘菜单
 		self.menu = (self.status_item,
 		             item('打开WebUI管理页面', self.open_webui),
-		             item('启动WebUI', self.start_webui_thread),
+		             item('启动WebUI', self.start_webui),
 		             item('停止WebUI(这会关闭所有的FRPC客户端)', self.stop_webui),
 		             item('退出应用(同上)', self.exit_app))
 		
@@ -60,19 +58,7 @@ class TrayApp:
 		image = Image.open(icon_path)
 		self.icon = icon("name", image, APPNAME, self.menu)
 		# 在 TrayApp 初始化时启动 Flask 应用
-		self.start_webui_thread()  # 改为启动新线程来运行 Flask 应用
-	
-	def start_webui_thread(self):  # 新增此方法来启动 Flask 应用的线程
-		if self.is_port_in_use(PORT):
-			logging.error(f'端口{str(PORT)}被占用，尝试清除占用端口')
-			kill_port()
-			self.start_webui_thread()
-		elif self.is_port_in_use(PORT):
-			logging.error('WebUI启动失败，端口' + str(PORT) + '已被占用')
-		else:
-			threading.Thread(target=self.start_webui).start()  # 在新线程中启动 Flask 应用
-			self.icon.update_menu()
-			logging.info('WebUI已启动')
+		self.start_webui()
 	
 	@staticmethod
 	def is_port_in_use(port):
@@ -100,11 +86,8 @@ class TrayApp:
 	def stop_webui(self):
 		stop_frpc()
 		if self.webui_server is not None:
-			self.webui_server.shutdown()  # 关闭 Flask 应用
+			self.webui_server.shutdown()
 			self.webui_server = None
-			self.stop_event.set()  # 设置 Event 对象
-			# 杀死 Flask 应用的线程
-			kill_port()
 			logging.info('WebUI已停止')
 		self.icon.update_menu()
 	
@@ -389,18 +372,6 @@ def downloadConfig():
 	else:
 		logging.error('下远程配置文件失败: ' + new_config_name)
 		return jsonify({'status': 'error', 'message': result['message']})
-
-
-def kill_port():
-	try:
-		if os.name == 'posix':  # Unix/Linux/macOS
-			os.system(f'kill $(lsof -t -i:{PORT})')
-		elif os.name == 'nt':  # Windows
-			os.system(
-				f'for /f "tokens=5" %a in (\'netstat -aon ^| find ":{PORT}" ^| find "LISTEN"\') do taskkill /f /pid %a')
-		logging.info('已经结束端口 +' + str(PORT))
-	except Exception as e:
-		logging.error(f'结束端口 + {str(PORT)} 失败：' + str(e))
 
 
 @app.route('/api/stop_all', methods=['GET'])

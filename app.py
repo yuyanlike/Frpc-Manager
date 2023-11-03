@@ -88,7 +88,7 @@ class TrayApp:
 			logging.error('WebUI启动失败，端口' + str(PORT) + '已被占用')
 		else:
 			self.webui_server = make_server(host='0.0.0.0', port=PORT, app=app)
-			server_thread = threading.Thread(target=self.webui_server.serve_forever)
+			server_thread = threading.Thread(target=self.webui_server.serve_forever)  # 在新线程中启动 Flask 应用
 			server_thread.start()
 			self.icon.update_menu()
 			logging.info('WebUI已启动')

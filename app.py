@@ -64,10 +64,6 @@ class TrayApp:
 	
 	def start_webui_thread(self):  # 新增此方法来启动 Flask 应用的线程
 		if self.is_port_in_use(PORT):
-			logging.error(f'端口{str(PORT)}被占用，尝试清除占用端口')
-			kill_port()
-			self.start_webui_thread()
-		elif self.is_port_in_use(PORT):
 			logging.error('WebUI启动失败，端口' + str(PORT) + '已被占用')
 		else:
 			threading.Thread(target=self.start_webui).start()  # 在新线程中启动 Flask 应用
@@ -433,7 +429,7 @@ def windows_check():
 	:return:
 	"""
 	if platform.system() in ('Windows', 'Darwin'):
-		logging.info('Windows或者MacOS中运行，WebUI界面')
+		logging.info('Windows或者MacOS中运行，自动打开WebUI界面')
 		webbrowser.open('http://localhost:' + str(PORT))
 
 

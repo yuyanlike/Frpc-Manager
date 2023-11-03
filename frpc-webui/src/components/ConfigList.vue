@@ -7,16 +7,21 @@
         <el-table :data="configs" style="width: 100%">
           <el-table-column label="配置文件名" prop="name" width="300"></el-table-column>
           <el-table-column label="状态" prop="status" width="300"></el-table-column>
-          <el-table-column label="操作" width="350">
+          <el-table-column label="操作" width="400">
             <template v-slot:default="scope">
               <el-button :disabled="scope.row.status === '运行中🟢'" type="primary"
                          @click="startProcess(scope.row.name)">启动
               </el-button>
-              <el-button :disabled="scope.row.status !== '运行中🟢'" type="danger"
+              <el-button :disabled="scope.row.status !== '运行中🟢'" type="info"
                          @click="stopProcess(scope.row.name)">停止
               </el-button>
-              <el-button type="warning" @click="showEditConfigDialog(scope.row.name)">编辑</el-button>
-              <el-button :disabled="scope.row.status === '运行中🟢'" type="info"
+              <el-button :disabled="scope.row.status === '运行中🟢'" type="warning"
+                         @click="showEditConfigDialog(scope.row.name)">编辑
+              </el-button>
+              <el-button :disabled="scope.row.status !== '运行中🟢'" type="success"
+                         @click="showAccessLinks(scope.row.name)">访问
+              </el-button>
+              <el-button :disabled="scope.row.status === '运行中🟢'" type="danger"
                          @click="deleteConfig(scope.row.name)">删除
               </el-button>
             </template>
@@ -31,25 +36,37 @@
       <el-col :span="24">
         <h3>新建配置文件</h3>
         <el-input v-model="selectedConfig" :disabled="!isNewConfig" placeholder="文件名" type="text"
+                  style="width: 1000px"
                   @change="validateFileName"></el-input>
         <el-input v-model="configContent" :autosize="{ minRows: 10, maxRows: Infinity }" class="button-spacing"
+                  style="width: 1000px"
                   placeholder="配置内容" type="textarea"></el-input>
+        <el-col :span="24">
         <el-button class="button-spacing" type="primary" @click="saveConfig">保存</el-button>
+        </el-col>
       </el-col>
     </el-row>
     <el-row v-if="showapiconfig">
       <el-col :span="24">
         <h3>获取远程配置</h3>
+        <el-text class="mx-1" type="danger">远程访问令牌都存储在本地Cookies中</el-text>
+        <el-col :span="24">
         <el-radio-group v-model="selectedApi" class="ml-4">
           <el-radio label="muhanfrp" size="large">木韩FRP</el-radio>
           <el-radio label="sakurafrp" size="large">樱花FRP</el-radio>
         </el-radio-group>
-        <el-input v-model="apiKeys[selectedApi]" placeholder="请输入API密钥" type="text"></el-input>
+        </el-col>
+        <el-col :span="24">
+          <el-input v-model="apiKeys[selectedApi]" placeholder="请输入API密钥" show-password style="width: 1000px"
+                    type="password"></el-input>
+        </el-col>
+        <el-col :span="24">
         <el-button class="button-spacing" type="primary" @click="getRemoteApi">获取</el-button>
+        </el-col>
         <el-table :data="remoteConfigs" style="width: 100%">
           <el-table-column label="ID" prop="id" width="300"></el-table-column>
           <el-table-column label="名称" prop="name" width="300"></el-table-column>
-          <el-table-column label="操作" width="350">
+          <el-table-column label="操作" width="400">
             <template v-slot:default="scope">
               <el-button type="primary" @click="downloadConfig(scope.row)">下载</el-button>
             </template>
@@ -75,7 +92,7 @@ export default {
       isNewConfig: false,
       remoteConfigs: [],
       showapiconfig: false,
-      selectedApi: 'muhanfrp',
+      selectedApi: '',
       VUE_APP_TITLE: process.env.VUE_APP_TITLE,
 
       apiKeys: {
@@ -272,9 +289,68 @@ export default {
           .catch(() => {
             Swal.fire('请求错误', '', 'error');
           });
+    },
+    extractAccessLinks(configText) {
+      const accessLinks = [];
+      const lines = configText.split('\n');
+      let currentServerAddr = '';
+      let currentRemotePort = '';
+      let currentCustomDomains = '';
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const parts = line.split('=');
+
+        if (parts.length === 2) {
+          const key = parts[0].trim();
+          let value = parts[1].trim();
+          value = value.replace(/['"]+/g, ''); // 去掉可能存在的引号
+
+          if (key === "server_addr" || key === "serverAddr") {
+            currentServerAddr = value;
+          } else if (key === "remote_port" || key === "remotePort") {
+            currentRemotePort = value;
+            accessLinks.push(currentServerAddr + ":" + currentRemotePort);
+          } else if (key === "custom_domains" || key === "customDomains") {
+            currentCustomDomains = value;
+            accessLinks.push(currentCustomDomains);
+          }
+        }
+      }
+
+      return accessLinks;
+    },
+    showAccessLinks(name) {
+      axios.get(`/api/configs/${name}`)
+          .then(response => {
+            const configContent = response.data.content;
+            const accessLinks = this.extractAccessLinks(configContent);
+
+            // 如果只有一个链接，直接在新窗口打开
+            if (accessLinks.length === 1) {
+              window.open('http://' + accessLinks[0], '_blank');
+            } else {
+              // 使用 Swal 展示访问链接
+              const linksHtml = accessLinks.map(link => `<a href="http://${link}" target="_blank">${link}</a>`).join('<br><br>');
+              Swal.fire({
+                title: '访问地址',
+                html: linksHtml,
+                icon: 'info'
+              });
+            }
+          })
+          .catch(() => {
+            Swal.fire('请求错误', '', 'error');
+          });
+    },
+  },
+  watch: {
+    selectedApi() {
+      // 当 selectedApi 的值发生变化时，调用 getRemoteApi 方法
+      if (this.apiKeys[this.selectedApi]) {
+        this.getRemoteApi();
+      }
     }
-
-
   },
   created() {
     this.getProcesses();  // 只需要调用 getProcesses() 函数

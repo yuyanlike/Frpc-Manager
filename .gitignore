@@ -5,5 +5,5 @@
 /frpc/*.ini
 /app.log
 /frpc-webui/dist
-/dist
+/webui
 /build
